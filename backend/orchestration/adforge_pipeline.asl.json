@@ -1,0 +1,19 @@
+{
+    "Comment": "AdForge AI pipeline (stub)",
+    "StartAt": "Vision",
+    "States": {
+        "Vision": {
+        "Type": "Task",
+        "Resource": "vision_lambda_arn",
+        "Next": "Reasoning"
+        },
+        "Reasoning": {
+        "Type": "Task",
+        "Resource": "reasoning_lambda_arn",
+        "Next": "Done"
+        },
+        "Done": {
+        "Type": "Succeed"
+        }
+    }
+}
