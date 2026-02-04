@@ -27,9 +27,9 @@ AdForge AI is a full-stack, serverless, multimodal ad-generation platform that t
 
 | File | Description |
 |------|-------------|
-| `vision/rekognition.py` | Analyzes the product image using Amazon Rekognition to extract labels/features. (stub) |
-| `reasoning/bedrock_text.py` | Generates ad copy using Amazon Bedrock based on extracted labels. (stub) |
-| `audio/polly.py` | Converts generated text to speech using Amazon Polly. (stub) |
+| `vision/rekognition.py` | ✅ Analyzes the product image using Amazon Rekognition to extract labels with 80%+ confidence. |
+| `reasoning/bedrock_text.py` | ✅ Generates a 60-second ad script and scene description using Claude 3.5 Sonnet on Amazon Bedrock. |
+| `audio/polly.py` | ✅ Converts the ad script to speech using Amazon Polly (neural engine, Matthew voice), saves MP3 to S3. |
 | `visual/bedrock_image.py` | Generates visual ad assets using Amazon Bedrock image models. (stub) |
 | `assemble/assemble_assets.py` | Combines all generated assets into a final manifest. (stub) |
 
@@ -56,11 +56,10 @@ React-based UI for uploading product images and viewing generated ads.
 - [x] Set up project structure
 - [x] Created API handlers (start_job, get_status)
 - [x] Configured dynamic STATE_MACHINE_ARN using AWS account ID
-- [x] Created stub pipeline handlers
 - [x] Defined Step Functions state machine
-- [ ] Implement Rekognition integration
-- [ ] Implement Bedrock text generation
-- [ ] Implement Polly audio generation
+- [x] Implement Rekognition integration (extracts labels with 80%+ confidence)
+- [x] Implement Bedrock text generation (Claude 3.5 Sonnet for ad scripts)
+- [x] Implement Polly audio generation (neural voice, saves to S3)
 - [ ] Implement Bedrock image generation
 - [ ] Implement asset assembly
 - [ ] Complete frontend integration
