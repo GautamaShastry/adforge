@@ -4,12 +4,12 @@
     "States": {
         "Vision": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-east-1:717279721246:function:adforge-vision",
+            "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:adforge-vision",
             "Next": "Reasoning"
         },
         "Reasoning": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-east-1:717279721246:function:adforge-reasoning",
+            "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:adforge-reasoning",
             "Next": "ParallelGen"
         },
         "ParallelGen": {
@@ -20,7 +20,7 @@
                     "States": {
                         "Audio": {
                             "Type": "Task",
-                            "Resource": "arn:aws:lambda:us-east-1:717279721246:function:adforge-audio",
+                            "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:adforge-audio",
                             "End": true
                         }
                     }
@@ -30,7 +30,7 @@
                     "States": {
                         "Image": {
                             "Type": "Task",
-                            "Resource": "arn:aws:lambda:us-east-1:717279721246:function:adforge-image",
+                            "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:adforge-image",
                             "End": true
                         }
                     }
@@ -50,7 +50,7 @@
         },
         "Assemble": {
             "Type": "Task",
-            "Resource": "arn:aws:lambda:us-east-1:717279721246:function:adforge-assemble",
+            "Resource": "arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:adforge-assemble",
             "End": true
         }
     }

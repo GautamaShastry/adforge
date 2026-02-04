@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+
+# Step Functions with real account ID (use .template.asl.json instead)
+orchestration/adforge_pipeline.asl.json

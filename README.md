@@ -30,8 +30,8 @@ AdForge AI is a full-stack, serverless, multimodal ad-generation platform that t
 | `vision/rekognition.py` | ✅ Analyzes the product image using Amazon Rekognition to extract labels with 80%+ confidence. |
 | `reasoning/bedrock_text.py` | ✅ Generates a 60-second ad script and scene description using Claude 3.5 Sonnet on Amazon Bedrock. |
 | `audio/polly.py` | ✅ Converts the ad script to speech using Amazon Polly (neural engine, Matthew voice), saves MP3 to S3. |
-| `visual/bedrock_image.py` | Generates visual ad assets using Amazon Bedrock image models. (stub) |
-| `assemble/assemble_assets.py` | Combines all generated assets into a final manifest. (stub) |
+| `visual/bedrock_image.py` | ✅ Generates lifestyle product imagery using Amazon Titan Image Generator v1 (512x512), saves PNG to S3. |
+| `assemble/assemble_assets.py` | ✅ Bundles script, audio, and image into a manifest.json and uploads to S3. |
 
 ### Orchestration (`backend/orchestration/`)
 
@@ -60,6 +60,6 @@ React-based UI for uploading product images and viewing generated ads.
 - [x] Implement Rekognition integration (extracts labels with 80%+ confidence)
 - [x] Implement Bedrock text generation (Claude 3.5 Sonnet for ad scripts)
 - [x] Implement Polly audio generation (neural voice, saves to S3)
-- [ ] Implement Bedrock image generation
-- [ ] Implement asset assembly
+- [x] Implement Bedrock image generation (Titan Image Generator v1, 512x512)
+- [x] Implement asset assembly (creates manifest.json with all asset references)
 - [ ] Complete frontend integration
