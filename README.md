@@ -62,4 +62,60 @@ React-based UI for uploading product images and viewing generated ads.
 - [x] Implement Polly audio generation (neural voice, saves to S3)
 - [x] Implement Bedrock image generation (Titan Image Generator v1, 512x512)
 - [x] Implement asset assembly (creates manifest.json with all asset references)
-- [ ] Complete frontend integration
+- [x] Complete frontend integration
+- [x] Redesign UI with modern theme
+
+## Current Output
+
+The pipeline currently generates:
+- **Ad Script**: AI-generated narrative with voiceover text, scene descriptions, and tagline
+- **Audio**: MP3 voiceover generated via Amazon Polly
+- **Image**: Single AI-generated lifestyle image via Amazon Titan
+
+### Sample Output
+```
+The scene opens with a serene morning in a cozy kitchen. A woman, radiating warmth 
+and joy, is seen preparing her morning routine... 
+
+Voiceover: 'Start your day with a perfect blend of cream and joy. Our new disposable 
+cup makes every moment delightful.'
+
+Tagline: 'Every moment, every delight.'
+```
+
+## Future Enhancements
+
+- [ ] Generate multiple scene images for video assembly
+- [ ] Add FFmpeg-based video assembly (stitch images + audio into MP4)
+- [ ] Support different ad formats (15s, 30s, 60s)
+- [ ] Add video transitions and effects
+- [ ] Integrate AI video generation (Runway/Stability AI) for motion
+
+## Running Locally
+
+### Backend
+```bash
+cd backend
+sam build
+sam local start-api
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Cost Estimates
+
+| Component | Cost per Ad |
+|-----------|-------------|
+| Rekognition | ~$0.001 |
+| Bedrock (Claude) | ~$0.01-0.03 |
+| Bedrock (Titan Image) | ~$0.01-0.08 |
+| Polly | ~$0.004 |
+| S3 Storage | Minimal |
+| **Total** | **~$0.03-0.12** |
+
+Adding video assembly with multiple images would increase cost by ~$0.03-0.25 per ad.
