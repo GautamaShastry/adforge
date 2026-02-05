@@ -1,16 +1,20 @@
 import json
 import uuid
 import base64
-import boto3 # AWS SDK for Python(let's you call AWS services without explicit authentication)
-
+import os
+import boto3
 
 s3 = boto3.client("s3")
 sf = boto3.client("stepfunctions")
 
-account_id = boto3.client("sts").get_caller_identity()["Account"]
+INPUT_BUCKET = os.environ["INPUT_BUCKET"]
+STATE_MACHINE_ARN = os.environ["STATE_MACHINE_ARN"]
 
-INPUT_BUCKET = "adforge-input-bucket"
-STATE_MACHINE_ARN = f"arn:aws:states:us-east-1:{account_id}:stateMachine:adforge-pipeline"
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST,OPTIONS"
+}
 
 def handler(event, context):
     body = json.loads(event["body"])
@@ -37,6 +41,7 @@ def handler(event, context):
     
     return {
         "statusCode": 200,
+        "headers": CORS_HEADERS,
         "body": json.dumps({
             "jobId": job_id
         })

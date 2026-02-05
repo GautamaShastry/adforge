@@ -2,11 +2,12 @@ import Dashboard from "./pages/Dashboard"
 import './App.css'
 
 function App() {
-  
-
   return (
-    <div style={{padding: "2rem", fontFamily: "sans-serif"}}>
-      <h1>AdForge</h1>
+    <div className="app">
+      <header className="app-header">
+        <h1 className="app-logo">✨ AdForge AI</h1>
+        <p className="app-tagline">Transform your product images into stunning video ads</p>
+      </header>
       <Dashboard />
     </div>
   )

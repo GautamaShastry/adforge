@@ -1,8 +1,15 @@
 import json
+import os
 import boto3
 
 s3 = boto3.client("s3")
-OUTPUT_BUCKET = "adforge-output-bucket"
+OUTPUT_BUCKET = os.environ["OUTPUT_BUCKET"]
+
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET,OPTIONS"
+}
 
 def handler(event, context):
     job_id = event["queryStringParameters"]["jobId"]
@@ -13,6 +20,7 @@ def handler(event, context):
         manifest = json.loads(obj["Body"].read())
         return {
             "statusCode": 200,
+            "headers": CORS_HEADERS,
             "body": json.dumps({
                 "status": "COMPLETED",
                 "data": manifest
@@ -21,5 +29,6 @@ def handler(event, context):
     except s3.exceptions.NoSuchKey:
         return {
             "statusCode": 200,
+            "headers": CORS_HEADERS,
             "body": json.dumps({"status": "IN_PROGRESS"})
         }

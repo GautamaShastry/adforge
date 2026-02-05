@@ -1,9 +1,10 @@
+import os
 import boto3
 
 polly = boto3.client("polly")
 s3 = boto3.client("s3")
 
-OUTPUT_BUCKET = "adforge-output-bucket"
+OUTPUT_BUCKET = os.environ["OUTPUT_BUCKET"]
 
 def handler(event, context):
     audio = polly.synthesize_speech(

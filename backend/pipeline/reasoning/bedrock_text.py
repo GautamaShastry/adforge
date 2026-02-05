@@ -2,7 +2,7 @@ import boto3
 import json
 
 bedrock = boto3.client("bedrock-runtime")
-MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+MODEL_ID = "amazon.nova-lite-v1:0"
 
 def handler(event, context):
     labels = event.get("labels", [])
@@ -21,25 +21,39 @@ Return STRICT JSON only, no markdown:
         contentType="application/json",
         accept="application/json",
         body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 800,
-            "temperature": 0.7
+            "messages": [{"role": "user", "content": [{"text": prompt}]}],
+            "inferenceConfig": {
+                "maxTokens": 800,
+                "temperature": 0.7
+            }
         })
     )
     
     body = json.loads(response["body"].read())
-    raw_text = body["content"][0]["text"]
+    raw_text = body["output"]["message"]["content"][0]["text"]
     
     # Handle potential markdown code blocks in response
-    if raw_text.startswith("```"):
-        raw_text = raw_text.split("```")[1]
-        if raw_text.startswith("json"):
-            raw_text = raw_text[4:]
+    if "```" in raw_text:
+        parts = raw_text.split("```")
+        for part in parts:
+            if part.startswith("json"):
+                raw_text = part[4:]
+                break
+            elif part.strip().startswith("{"):
+                raw_text = part
+                break
     raw_text = raw_text.strip()
     
-    content = json.loads(raw_text)
+    # Try to extract JSON from the response
+    try:
+        content = json.loads(raw_text)
+    except json.JSONDecodeError:
+        # Fallback if JSON parsing fails
+        content = {
+            "script": raw_text[:500] if len(raw_text) > 500 else raw_text,
+            "scene": "Product showcase with professional lighting"
+        }
     
-    event["script"] = content["script"]
-    event["scene"] = content["scene"]
+    event["script"] = content.get("script", "")
+    event["scene"] = content.get("scene", "Product showcase")
     return event

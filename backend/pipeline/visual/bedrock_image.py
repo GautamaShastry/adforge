@@ -1,20 +1,25 @@
-import boto3
+import os
 import json
 import base64
+import boto3
 
 bedrock = boto3.client("bedrock-runtime")
 s3 = boto3.client("s3")
 
-MODEL_ID = "amazon.titan-image-generator-v1"
-OUTPUT_BUCKET = "adforge-output-bucket"
+MODEL_ID = "amazon.titan-image-generator-v2:0"
+OUTPUT_BUCKET = os.environ["OUTPUT_BUCKET"]
 
 def handler(event, context):
+    # Truncate scene to fit within 512 char limit
+    scene = event.get('scene', 'Product showcase')[:400]
+    prompt = f"Professional product photography: {scene}"
+    
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
         body=json.dumps({
             "taskType": "TEXT_IMAGE",
             "textToImageParams": {
-                "text": f"Lifestyle product photography: {event['scene']}"
+                "text": prompt
             },
             "imageGenerationConfig": {
                 "numberOfImages": 1,

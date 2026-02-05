@@ -1,0 +1,222 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AdForge AI - Serverless ad generation pipeline
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 256
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type'"
+      AllowOrigin: "'*'"
+
+Resources:
+  # S3 Buckets
+  InputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub adforge-input-${AWS::AccountId}
+
+  OutputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub adforge-output-${AWS::AccountId}
+
+  # API Functions
+  StartJobFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-start-job
+      CodeUri: api/start_job/
+      Handler: handler.handler
+      Environment:
+        Variables:
+          INPUT_BUCKET: !Ref InputBucket
+          STATE_MACHINE_ARN: !Ref AdForgePipeline
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref InputBucket
+        - StepFunctionsExecutionPolicy:
+            StateMachineName: !GetAtt AdForgePipeline.Name
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /start-job
+            Method: POST
+
+  GetStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-get-status
+      CodeUri: api/get_status/
+      Handler: handler.handler
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref OutputBucket
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref OutputBucket
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /get-status
+            Method: GET
+
+  # Pipeline Functions
+  VisionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-vision
+      CodeUri: pipeline/vision/
+      Handler: rekognition.handler
+      Policies:
+        - RekognitionDetectOnlyPolicy: {}
+        - S3ReadPolicy:
+            BucketName: !Ref InputBucket
+
+  ReasoningFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-reasoning
+      CodeUri: pipeline/reasoning/
+      Handler: bedrock_text.handler
+      Timeout: 60
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+
+  AudioFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-audio
+      CodeUri: pipeline/audio/
+      Handler: polly.handler
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref OutputBucket
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - polly:SynthesizeSpeech
+              Resource: '*'
+        - S3CrudPolicy:
+            BucketName: !Ref OutputBucket
+
+  ImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-image
+      CodeUri: pipeline/visual/
+      Handler: bedrock_image.handler
+      Timeout: 60
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref OutputBucket
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+        - S3CrudPolicy:
+            BucketName: !Ref OutputBucket
+
+  AssembleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: adforge-assemble
+      CodeUri: pipeline/assemble/
+      Handler: assemble_assets.handler
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref OutputBucket
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref OutputBucket
+
+  # Step Functions State Machine
+  AdForgePipeline:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: adforge-pipeline
+      DefinitionSubstitutions:
+        VisionArn: !GetAtt VisionFunction.Arn
+        ReasoningArn: !GetAtt ReasoningFunction.Arn
+        AudioArn: !GetAtt AudioFunction.Arn
+        ImageArn: !GetAtt ImageFunction.Arn
+        AssembleArn: !GetAtt AssembleFunction.Arn
+      Definition:
+        Comment: AdForge AI ad-generation pipeline
+        StartAt: Vision
+        States:
+          Vision:
+            Type: Task
+            Resource: ${VisionArn}
+            Next: Reasoning
+          Reasoning:
+            Type: Task
+            Resource: ${ReasoningArn}
+            Next: ParallelGen
+          ParallelGen:
+            Type: Parallel
+            Branches:
+              - StartAt: Audio
+                States:
+                  Audio:
+                    Type: Task
+                    Resource: ${AudioArn}
+                    End: true
+              - StartAt: Image
+                States:
+                  Image:
+                    Type: Task
+                    Resource: ${ImageArn}
+                    End: true
+            ResultSelector:
+              jobId.$: $[0].jobId
+              script.$: $[0].script
+              scene.$: $[0].scene
+              labels.$: $[0].labels
+              bucket.$: $[0].bucket
+              key.$: $[0].key
+              audio.$: $[0].audio
+              image.$: $[1].image
+            Next: Assemble
+          Assemble:
+            Type: Task
+            Resource: ${AssembleArn}
+            End: true
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref VisionFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ReasoningFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref AudioFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ImageFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref AssembleFunction
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+  InputBucket:
+    Description: S3 bucket for input images
+    Value: !Ref InputBucket
+  OutputBucket:
+    Description: S3 bucket for generated assets
+    Value: !Ref OutputBucket
